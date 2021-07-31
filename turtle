@@ -1,0 +1,165 @@
+function input(string)
+    print(string)
+    return io.read()
+end
+
+function rotateTurtle(dir, turns)
+    for i = 1, turns, 1 do
+        if dir == "right" then
+            turtle.turnRight()
+            if i == 1 then
+                Direction = Direction + turns
+            end
+        else
+            turtle.turnLeft()
+            if i == 1 then
+                Direction = Direction - turns
+        
+            end
+    
+        end
+    end
+    return formatDirection()
+end
+
+function UturnRight() 
+    Direction = rotateTurtle("right",1)
+    mineForward(1)
+    Direction = rotateTurtle("right",1) 
+end
+
+function UturnLeft()
+    Direction = rotateTurtle("left",1)
+    mineForward(1)
+    Direction = rotateTurtle("left",1)
+end
+
+function formatDirection()
+    if Direction < 0 then
+        Direction = Direction + 4
+    elseif Direction > 3 then
+        Direction = Direction - 4
+    end
+    return Direction
+end
+
+function getTurtleRotation(turn)
+    diff = turn - Direction
+    if diff == 3 or diff == -1 then
+        return "left",1 
+    elseif diff == 2 or diff == -2 then
+        return "right", 2
+    elseif diff == 1 or diff == -3 then
+        return "right",1
+    end
+end
+
+function mineForward(count)
+    for i = 1, count,1 do
+        turtle.dig()
+        turtle.forward()
+    end
+end
+
+function mineUpward(count)
+    for i = 1, count,1 do
+        turtle.digUp()
+        turtle.up()
+    end
+end
+
+CurrentPosition ={
+    ["Row"] = 0,
+    ["Layer"] = 0,
+    ["Block"] = 0,
+}
+
+Measurements = {
+    ["Length"] = 0, 
+    ["Width"] = 0,
+    ["Height"] = 0,
+}
+
+Fuel = turtle.getFuelLevel()
+Direction = 0 
+
+while true do
+    Fail = false
+    for key, value in pairs(Measurements) do
+        if value == 0 then
+            Measurements[key] = input("Enter the value for the ".. key .."> ")
+            Fail = true
+        end
+    end
+    if Fail == false then
+        break
+    end
+end
+
+Area = (Measurements["Length"] * Measurements["Height"] * Measurements["Width"])
+
+while Fuel < Area do
+    option = input("Enter |R| to take coal from the turtles inventory as you only have " .. Fuel .. " but need " .. Area .. "\nTo exit you can also enter T")
+    if option == "T" then
+        exit()
+    else
+        turtle.Refuel(100)
+    end
+    Fuel = turtle.getFuelLevel()
+end
+
+print("You have " .. Fuel .. "/" .. Area .. "Fuel required for this area... Starting mining")
+
+mineForward(1)
+for i = 1,Measurements["Height"],1 do
+    CurrentPosition["Layer"] = CurrentPosition["Layer"] + 1
+    if i > 1 then
+        mineUpward(1)
+        print("Going up")
+        if Direction == 0 then
+            Direction = rotateTurtle("right",2)
+        elseif Direction == 2 then
+            Direction = rotateTurtle("right",2)
+        end
+    end
+
+    for i = 1,Measurements["Width"],1 do
+        inverse = false
+
+        mineForward(tonumber(Measurements["Length"]) -1)
+        for i = 1, tonumber(Measurements["Length"]) -1, 1 do
+            mineForward(1)
+            if i % 5 == 0 then
+                turtle.select(2)
+                turtle.place()
+            end
+        end
+        
+        if i <  tonumber(Measurements["Width"]) then
+            if Direction == 0 then
+                if CurrentPosition["Layer"] % 2 ~= 0 then
+                    UturnRight()
+                else 
+                    UturnLeft()
+                end
+            else
+                if CurrentPosition["Layer"] % 2 ~= 0 then
+                    UturnLeft()
+                else
+                    UturnRight()
+                end
+            end
+        end
+    end
+end
+
+for i = 1,Measurements["Height"],1 do
+    turtle.down()
+end
+
+if Direction == 0 then
+    Direction = rotateTurtle(getTurtleRotation(3))
+    mineForward(Measurements["Width"] -1)
+    Direction = rotateTurtle(getTurtleRotation(2))
+    mineForward(Measurements["Length"])
+end
